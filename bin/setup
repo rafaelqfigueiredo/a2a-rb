@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "==> Installing dependencies..."
+bundle install
+
+echo ""
+echo "✓ Setup complete."
+echo ""
+echo "Next steps:"
+echo "  bundle exec rake spec   # run all tests"
+echo "  bin/console             # open a debug console"
+echo "  bundle exec rake -T     # list all Rake tasks"

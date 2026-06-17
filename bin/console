@@ -1,0 +1,12 @@
+#!/usr/bin/env ruby
+# Interactive console for debugging a2a-rb.
+# Usage: bin/console
+#
+# Everything in the A2aRb namespace is already loaded.
+# Use `pry` commands: ls, cd, show-source, show-doc, wtf?
+
+require "bundler/setup"
+require "a2a"
+require "pry"
+
+Pry.start
