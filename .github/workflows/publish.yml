@@ -9,10 +9,18 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify tag is on main
+        run: |
+          git fetch origin main
+          git merge-base --is-ancestor HEAD origin/main \
+            || (echo "Tag is not reachable from main — aborting." && exit 1)
 
       - uses: ruby/setup-ruby@v1
         with:
@@ -22,10 +30,6 @@ jobs:
       - name: Run tests
         run: bundle exec rake spec
 
-      - name: Build gem
-        run: bundle exec rake build
-
-      - name: Push to RubyGems
-        env:
-          GEM_HOST_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
-        run: gem push pkg/*.gem
+      - uses: dawidd6/action-publish-gem@v1
+        with:
+          api_key: ${{ secrets.RUBYGEMS_API_KEY }}
