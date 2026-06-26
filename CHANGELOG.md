@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.1.1] — 2026-06-26\n\n### Added
+## [0.1.1] — 2026-06-26
+
+### Added
 - wire up top-level A2A module with error classes and requires
 - add JSONRPCEnvelope for server-side request/response handling
 - add JSON-RPC and HTTP+JSON protocol bindings and client
@@ -33,6 +35,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial gem scaffold (lib, spec, bin/console, bin/setup, gemspec)
 
 [Unreleased]: https://github.com/rafaelqfigueiredo/a2a-rb/compare/v0.1.1...HEAD
-[0.1.0]: https://github.com/rafaelqfigueiredo/a2a-rb/releases/tag/v0.1.0
-
 [0.1.1]: https://github.com/rafaelqfigueiredo/a2a-rb/compare/v0.1.0...v0.1.1
+[0.1.0]: https://github.com/rafaelqfigueiredo/a2a-rb/releases/tag/v0.1.0

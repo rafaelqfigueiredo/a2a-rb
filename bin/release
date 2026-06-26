@@ -137,7 +137,7 @@ fi
 
 bold "Changelog entry that will be written:"
 bold "────────────────────────────────────────"
-echo -e "## [${NEXT}] — ${TODAY}\n\n${ENTRY}"
+printf "## [%s] — %s\n\n%s\n" "${NEXT}" "${TODAY}" "${ENTRY}"
 bold "────────────────────────────────────────"
 bold ""
 read -rp "Release ${TAG} with the above changelog? [y/N] " confirm
@@ -147,14 +147,14 @@ read -rp "Release ${TAG} with the above changelog? [y/N] " confirm
 # Write CHANGELOG.md
 # ---------------------------------------------------------------------------
 
-CHANGELOG_BLOCK="## [${NEXT}] — ${TODAY}\n\n${ENTRY}"
-
 # Replace the [Unreleased] section content with an empty one, then insert
 # the new versioned block immediately after it.
 # Strategy: use Ruby for reliable multi-line sed across macOS/Linux.
-ruby - "$CHANGELOG_BLOCK" <<'RUBY'
-content   = File.read("CHANGELOG.md")
-new_block = ARGV[0]
+ruby - "$NEXT" "$TODAY" "$ENTRY" <<'RUBY'
+version, today, entry = ARGV[0], ARGV[1], ARGV[2]
+new_block = "## [#{version}] — #{today}\n\n#{entry}"
+
+content = File.read("CHANGELOG.md")
 
 # Ensure [Unreleased] section is empty (strip any hand-written content)
 content = content.sub(
@@ -198,10 +198,9 @@ git add lib/a2a/version.rb CHANGELOG.md
 git commit -m "Release ${TAG}"
 git tag -a "${TAG}" -m "Release ${TAG}"
 
+bold "Pushing main and ${TAG} to origin..."
+git push origin main "${TAG}"
+
 green ""
-green "✓ Committed and tagged ${TAG}"
-green ""
-bold "Next steps:"
-bold "  git push origin main ${TAG}"
-bold "  bundle exec rake build"
-bold "  gem push pkg/a2a-rb-${NEXT}.gem"
+green "✓ ${TAG} pushed — GitHub Actions will build and publish the gem."
+green "  https://github.com/rafaelqfigueiredo/a2a-rb/actions"
