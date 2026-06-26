@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+HOOK=".git/hooks/commit-msg"
+
+cat > "$HOOK" <<'EOF'
+#!/usr/bin/env bash
+# Validates conventional commit format:
+#   <type>[optional scope]: <description>
+#
+# Valid types: feat, fix, docs, chore, refactor, test, perf, ci, build, revert
+# Exempt: merge commits, release commits produced by bin/release
+
+msg=$(cat "$1")
+
+# Let through merge commits and release commits
+[[ "$msg" =~ ^Merge[[:space:]] ]] && exit 0
+[[ "$msg" =~ ^Release[[:space:]]v ]] && exit 0
+
+pattern='^(feat|fix|docs|chore|refactor|test|perf|ci|build|revert)(\(.+\))?: .+'
+
+if ! [[ "$msg" =~ $pattern ]]; then
+  echo ""
+  echo "  ✗ Commit message does not follow conventional commits format."
+  echo ""
+  echo "  Expected:  <type>[(<scope>)]: <description>"
+  echo "  Example:   feat(client): add cancel_task terminal guard"
+  echo ""
+  echo "  Valid types: feat fix docs chore refactor test perf ci build revert"
+  echo ""
+  echo "  Your message: $msg"
+  echo ""
+  exit 1
+fi
+EOF
+
+chmod +x "$HOOK"
+echo "✓ commit-msg hook installed at $HOOK"

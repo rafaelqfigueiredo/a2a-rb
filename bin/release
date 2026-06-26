@@ -1,0 +1,207 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+BUMP=${1:-}
+
+red()   { echo -e "\033[31m$*\033[0m"; }
+green() { echo -e "\033[32m$*\033[0m"; }
+bold()  { echo -e "\033[1m$*\033[0m"; }
+
+if [[ -z "$BUMP" ]]; then
+  bold "Usage: bin/release <major|minor|patch>"
+  exit 1
+fi
+
+if [[ -n "$(git status --porcelain)" ]]; then
+  red "Working tree is dirty. Commit or stash changes first."
+  exit 1
+fi
+
+# ---------------------------------------------------------------------------
+# Version helpers
+# ---------------------------------------------------------------------------
+
+current_version() {
+  grep -oE '[0-9]+\.[0-9]+\.[0-9]+' lib/a2a/version.rb | head -1
+}
+
+bump_version() {
+  local current="$1" bump="$2"
+  IFS='.' read -r major minor patch <<< "$current"
+  case "$bump" in
+    major) echo "$((major + 1)).0.0" ;;
+    minor) echo "${major}.$((minor + 1)).0" ;;
+    patch) echo "${major}.${minor}.$((patch + 1))" ;;
+    *)     red "Unknown bump type: $bump. Use major, minor, or patch."; exit 1 ;;
+  esac
+}
+
+# ---------------------------------------------------------------------------
+# Changelog generation from conventional commits
+#
+# Reads every commit since the last vX.Y.Z tag (or all commits if none).
+# Groups by prefix into Keep-a-Changelog categories.
+# ---------------------------------------------------------------------------
+
+generate_changelog_entry() {
+  local since_ref="$1"
+  local commits
+
+  commits=$(git log "${since_ref}..HEAD" --format="%s" 2>/dev/null) \
+    || commits=$(git log --format="%s")
+
+  # Delegate parsing and grouping to Ruby (bash 3.2 regex is too limited)
+  ruby - "$commits" <<'RUBY'
+subjects = ARGV[0].split("\n").map(&:strip).reject(&:empty?)
+
+PATTERN = /\A([a-z]+)(?:\(([^)]+)\))?: (.+)\z/
+CATEGORY = {
+  "feat"     => :added,
+  "fix"      => :fixed,
+  "refactor" => :changed,
+  "chore"    => :changed,
+  "perf"     => :perf,
+  "revert"   => :removed,
+  "remove"   => :removed,
+  "deprecate"=> :deprecated,
+  "security" => :security,
+}
+EXEMPT = [/\ARelease v/, /\AMerge /]
+
+buckets = { added: [], changed: [], deprecated: [], removed: [], fixed: [],
+            perf: [], security: [], other: [] }
+
+subjects.each do |subject|
+  next if EXEMPT.any? { |re| re.match?(subject) }
+
+  if (m = PATTERN.match(subject))
+    type, scope, desc = m[1], m[2], m[3]
+    entry = scope ? "#{desc} (#{scope})" : desc
+    bucket = CATEGORY[type] || :other
+  else
+    entry  = subject
+    bucket = :other
+  end
+
+  buckets[bucket] << entry
+end
+
+LABELS = {
+  added: "Added", changed: "Changed", deprecated: "Deprecated",
+  removed: "Removed", fixed: "Fixed", perf: "Performance",
+  security: "Security", other: "Other"
+}
+
+output = buckets.filter_map do |key, items|
+  next if items.empty?
+  "### #{LABELS[key]}\n" + items.map { |i| "- #{i}" }.join("\n")
+end.join("\n\n")
+
+print output
+RUBY
+}
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+
+bold "Running specs..."
+bundle exec rake spec
+
+CURRENT=$(current_version)
+NEXT=$(bump_version "$CURRENT" "$BUMP")
+TAG="v${NEXT}"
+PREV_TAG="v${CURRENT}"
+TODAY=$(date +%Y-%m-%d)
+
+# Determine the ref to diff from
+if git rev-parse "$PREV_TAG" >/dev/null 2>&1; then
+  SINCE_REF="$PREV_TAG"
+else
+  # No previous tag — use the very first commit
+  SINCE_REF=$(git rev-list --max-parents=0 HEAD)
+fi
+
+bold ""
+bold "  Current: ${CURRENT}"
+bold "  Next:    ${NEXT}  (${TAG})"
+bold ""
+
+ENTRY=$(generate_changelog_entry "$SINCE_REF")
+
+if [[ -z "$(echo "$ENTRY" | tr -d '[:space:]')" ]]; then
+  red "No conventional commits found since ${SINCE_REF}."
+  red "Nothing to put in the changelog. Aborting."
+  exit 1
+fi
+
+bold "Changelog entry that will be written:"
+bold "────────────────────────────────────────"
+echo -e "## [${NEXT}] — ${TODAY}\n\n${ENTRY}"
+bold "────────────────────────────────────────"
+bold ""
+read -rp "Release ${TAG} with the above changelog? [y/N] " confirm
+[[ "$confirm" =~ ^[Yy]$ ]] || exit 0
+
+# ---------------------------------------------------------------------------
+# Write CHANGELOG.md
+# ---------------------------------------------------------------------------
+
+CHANGELOG_BLOCK="## [${NEXT}] — ${TODAY}\n\n${ENTRY}"
+
+# Replace the [Unreleased] section content with an empty one, then insert
+# the new versioned block immediately after it.
+# Strategy: use Ruby for reliable multi-line sed across macOS/Linux.
+ruby - "$CHANGELOG_BLOCK" <<'RUBY'
+content   = File.read("CHANGELOG.md")
+new_block = ARGV[0]
+
+# Ensure [Unreleased] section is empty (strip any hand-written content)
+content = content.sub(
+  /^(## \[Unreleased\])\n.*?(?=\n## |\z)/m,
+  "\\1\n"
+)
+
+# Insert new versioned block after the [Unreleased] section
+content = content.sub(
+  /^(## \[Unreleased\]\n)/,
+  "\\1\n#{new_block}\n"
+)
+
+File.write("CHANGELOG.md", content)
+RUBY
+
+# ---------------------------------------------------------------------------
+# Update comparison links
+# ---------------------------------------------------------------------------
+
+REPO_URL=$(git remote get-url origin 2>/dev/null \
+  | sed 's/\.git$//' \
+  | sed 's|git@github\.com:|https://github.com/|') || true
+
+if [[ -n "${REPO_URL:-}" ]]; then
+  # Replace [Unreleased] link
+  sed -i '' \
+    "s|\[Unreleased\]: .*|\[Unreleased\]: ${REPO_URL}/compare/${TAG}...HEAD|" \
+    CHANGELOG.md
+  # Append new version link
+  printf "\n[${NEXT}]: ${REPO_URL}/compare/${PREV_TAG}...${TAG}\n" >> CHANGELOG.md
+fi
+
+# ---------------------------------------------------------------------------
+# Bump version, commit, tag
+# ---------------------------------------------------------------------------
+
+sed -i '' "s/VERSION = \"${CURRENT}\"/VERSION = \"${NEXT}\"/" lib/a2a/version.rb
+
+git add lib/a2a/version.rb CHANGELOG.md
+git commit -m "Release ${TAG}"
+git tag -a "${TAG}" -m "Release ${TAG}"
+
+green ""
+green "✓ Committed and tagged ${TAG}"
+green ""
+bold "Next steps:"
+bold "  git push origin main ${TAG}"
+bold "  bundle exec rake build"
+bold "  gem push pkg/a2a-rb-${NEXT}.gem"
