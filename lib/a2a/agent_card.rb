@@ -43,17 +43,17 @@ module A2A
         name: hash.fetch("name"),
         description: hash.fetch("description"),
         version: hash.fetch("version"),
-        supported_interfaces: hash.fetch("supportedInterfaces").map { AgentInterface.from_h(_1) },
+        supported_interfaces: hash.fetch("supportedInterfaces").map { AgentInterface.from_h(it) },
         capabilities: AgentCapabilities.from_h(hash.fetch("capabilities")),
-        skills: hash.fetch("skills").map { AgentSkill.from_h(_1) },
-        security_schemes: (hash["securitySchemes"] || {}).transform_values { SecurityScheme.from_h(_1) },
+        skills: hash.fetch("skills").map { AgentSkill.from_h(it) },
+        security_schemes: (hash["securitySchemes"] || {}).transform_values { SecurityScheme.from_h(it) },
         security_requirements: hash["security"],
         default_input_modes: hash.fetch("defaultInputModes"),
         default_output_modes: hash.fetch("defaultOutputModes"),
         provider: hash["provider"] && AgentProvider.from_h(hash["provider"]),
         documentation_url: hash["documentationUrl"],
         icon_url: hash["iconUrl"],
-        signatures: hash["signatures"]&.map { Signature.from_h(_1) }
+        signatures: hash["signatures"]&.map { Signature.from_h(it) }
       )
     end
     # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
@@ -109,8 +109,8 @@ module A2A
 
     def sort_keys_recursive(obj)
       case obj
-      when Hash then obj.sort.to_h.transform_values { sort_keys_recursive(_1) }
-      when Array then obj.map { sort_keys_recursive(_1) }
+      when Hash then obj.sort.to_h.transform_values { sort_keys_recursive(it) }
+      when Array then obj.map { sort_keys_recursive(it) }
       else obj
       end
     end

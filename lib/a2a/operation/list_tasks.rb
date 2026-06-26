@@ -57,7 +57,7 @@ module A2A
 
         def self.from_h(hash)
           new(
-            tasks: Array(hash["tasks"]).map { Task.from_h(_1) },
+            tasks: Array(hash["tasks"]).map { Task.from_h(it) },
             next_page_token: hash.fetch("nextPageToken"),
             page_size: hash.fetch("pageSize"),
             total_size: hash.fetch("totalSize")

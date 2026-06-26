@@ -45,9 +45,9 @@ module A2A
           @response = response
         end
 
-        def each_line(&block)
+        def each_line(&)
           @response.read_body do |chunk|
-            chunk.each_line(&block)
+            chunk.each_line(&)
           end
         end
       end

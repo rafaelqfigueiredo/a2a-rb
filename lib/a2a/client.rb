@@ -37,17 +37,18 @@ module A2A
       run Operation::SendMessage.new(message, configuration: configuration, metadata: metadata, tenant: tenant)
     end
 
-    def send_streaming_message(message, configuration: {}, metadata: nil, tenant: nil, &block)
-      op = Operation::SendStreamingMessage.new(message, configuration: configuration, metadata: metadata, tenant: tenant)
-      run op, &block
+    def send_streaming_message(message, configuration: {}, metadata: nil, tenant: nil, &)
+      op = Operation::SendStreamingMessage.new(message, configuration: configuration, metadata: metadata,
+                                                        tenant: tenant)
+      run(op, &)
     end
 
     def get_task(id, history_length: nil, tenant: nil)
       run Operation::GetTask.new(id:, history_length:, tenant:)
     end
 
-    def list_tasks(**kwargs)
-      run Operation::ListTasks.new(**kwargs)
+    def list_tasks(**)
+      run Operation::ListTasks.new(**)
     end
 
     def cancel_task(id, metadata: nil, tenant: nil)
@@ -59,8 +60,8 @@ module A2A
       run Operation::CancelTask.new(id: task_id, metadata:, tenant:)
     end
 
-    def subscribe_to_task(id, tenant: nil, &block)
-      run Operation::SubscribeToTask.new(id:, tenant:), &block
+    def subscribe_to_task(id, tenant: nil, &)
+      run(Operation::SubscribeToTask.new(id:, tenant:), &)
     end
 
     def create_task_push_notification_config(config, tenant: nil)

@@ -9,7 +9,7 @@ module A2A
     end
 
     def self.from_h(hash)
-      new(schemes: hash.transform_values { _1.is_a?(Array) ? _1 : _1["list"] })
+      new(schemes: hash.transform_values { it.is_a?(Array) ? it : it["list"] })
     end
 
     def to_h

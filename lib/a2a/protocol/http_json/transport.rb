@@ -36,11 +36,11 @@ module A2A
           handle_delete_response(response)
         end
 
-        def stream(url, headers:, method: :post, body: {}, query: {}, &block)
+        def stream(url, headers:, method: :post, body: {}, query: {}, &)
           uri = URI.parse(url)
           http = Net::HTTP.new(uri.host, uri.port)
           http.use_ssl = uri.scheme == "https"
-          http.request(build_stream_request(uri, method, headers, body, query), &block)
+          http.request(build_stream_request(uri, method, headers, body, query), &)
         end
 
         private

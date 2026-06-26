@@ -26,7 +26,7 @@ module A2A
         examples: hash["examples"],
         input_modes: hash["inputModes"],
         output_modes: hash["outputModes"],
-        security_requirements: hash["securityRequirements"]&.map { SecurityRequirement.from_h(_1) }
+        security_requirements: hash["securityRequirements"]&.map { SecurityRequirement.from_h(it) }
       )
     end
 

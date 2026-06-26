@@ -23,8 +23,8 @@ module A2A
         id: hash.fetch("id"),
         context_id: hash["contextId"],
         status: Task::Status.from_h(hash.fetch("status")),
-        artifacts: Array(hash["artifacts"]).map { Artifact.from_h(_1) },
-        history: Array(hash["history"]).map { Message.from_h(_1) },
+        artifacts: Array(hash["artifacts"]).map { Artifact.from_h(it) },
+        history: Array(hash["history"]).map { Message.from_h(it) },
         metadata: hash["metadata"]
       )
     end

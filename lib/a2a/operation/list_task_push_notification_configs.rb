@@ -47,7 +47,7 @@ module A2A
 
         def self.from_h(hash)
           new(
-            configs: Array(hash["configs"]).map { PushNotification::Config.from_h(_1) },
+            configs: Array(hash["configs"]).map { PushNotification::Config.from_h(it) },
             next_page_token: hash["nextPageToken"]
           )
         end

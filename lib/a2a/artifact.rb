@@ -20,7 +20,7 @@ module A2A
         id: hash.fetch("artifactId"),
         name: hash["name"],
         description: hash["description"],
-        parts: Array(hash["parts"]).map { Part.from_h(_1) },
+        parts: Array(hash["parts"]).map { Part.from_h(it) },
         extensions: hash["extensions"],
         metadata: hash["metadata"]
       )

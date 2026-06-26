@@ -49,8 +49,8 @@ module A2A
 
       # Appends a supported interface. Accepts either an AgentInterface object
       # or kwargs forwarded to AgentInterface.new.
-      def interface(iface = nil, **kwargs)
-        @interfaces << (iface.is_a?(AgentInterface) ? iface : AgentInterface.new(**kwargs))
+      def interface(iface = nil, **)
+        @interfaces << (iface.is_a?(AgentInterface) ? iface : AgentInterface.new(**))
         self
       end
 
@@ -75,8 +75,8 @@ module A2A
 
       # Appends a skill. Accepts either an AgentSkill object or kwargs
       # forwarded to AgentSkill.new.
-      def skill(obj = nil, **kwargs)
-        @skills << (obj.is_a?(AgentSkill) ? obj : AgentSkill.new(**kwargs))
+      def skill(obj = nil, **)
+        @skills << (obj.is_a?(AgentSkill) ? obj : AgentSkill.new(**))
         self
       end
 

@@ -24,7 +24,7 @@ module A2A
       new(
         id: hash.fetch("messageId"),
         role: hash.fetch("role"),
-        parts: Array(hash["parts"]).map { Part.from_h(_1) },
+        parts: Array(hash["parts"]).map { Part.from_h(it) },
         context_id: hash["contextId"],
         task_id: hash["taskId"],
         reference_task_ids: hash["referenceTaskIds"],

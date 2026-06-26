@@ -7,14 +7,14 @@ module A2A
     module SseParser
       # Parses a stream of SSE lines, yielding one Streaming::Response per
       # logical event (blank-line delimited, multi-line data: concatenated).
-      def self.each(io, &block)
+      def self.each(io, &)
         buffer = +""
 
         io.each_line do |line|
           line = line.chomp
 
           if line.empty?
-            emit(buffer, &block) unless buffer.empty?
+            emit(buffer, &) unless buffer.empty?
             buffer = +""
           elsif line.start_with?("data:")
             # SSE spec: multiple data: lines are concatenated with U+000A
@@ -24,7 +24,7 @@ module A2A
           # skip comment lines (":"), "event:", "id:", "retry:" fields
         end
 
-        emit(buffer, &block) unless buffer.empty?
+        emit(buffer, &) unless buffer.empty?
       end
 
       def self.emit(buffer)

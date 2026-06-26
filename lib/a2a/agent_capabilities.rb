@@ -15,7 +15,7 @@ module A2A
       new(
         streaming: hash["streaming"],
         push_notifications: hash["pushNotifications"],
-        extensions: hash["extensions"]&.map { AgentExtension.from_h(_1) },
+        extensions: hash["extensions"]&.map { AgentExtension.from_h(it) },
         extended_agent_card: hash["extendedAgentCard"]
       )
     end

@@ -13,7 +13,7 @@ module A2A
       def self.from_h(hash)
         new(
           open_id_connect_url: hash.fetch("openIdConnectUrl"),
-          description: hash["description"],
+          description: hash["description"]
         )
       end
 
