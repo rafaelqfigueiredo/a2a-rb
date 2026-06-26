@@ -272,20 +272,19 @@ The script will:
 6. Bump `lib/a2a/version.rb`
 7. Commit both files with the message `Release vx.y.z`
 8. Create an annotated git tag `vx.y.z`
+9. Push the commit and tag to `origin main`
 
 Aborts if no conventional commits are found since the last tag.
 
-### 3. Push and publish
+### GitHub Actions publishes automatically
 
-```bash
-git push origin main vx.y.z     # push the commit and the tag together
+Pushing a `v*` tag triggers the publish workflow, which:
 
-bundle exec rake build           # builds pkg/a2a-rb-x.y.z.gem
-gem push pkg/a2a-rb-x.y.z.gem   # publish to RubyGems (requires credentials)
-```
+1. Verifies the tag is reachable from `main` (tags on other branches are rejected)
+2. Runs the full test suite
+3. Builds and pushes the gem to RubyGems via OIDC trusted publisher — no API key stored anywhere
 
-> RubyGems MFA is enforced for this gem. You will be prompted for a one-time
-> password when running `gem push`.
+`bin/release` is the only command you need to run.
 
 ### Preflight check (optional)
 
@@ -302,10 +301,8 @@ tree is clean.
 
 | Command | What it does |
 |---------|--------------|
-| `bin/release patch` | Bump patch, update changelog, commit, tag |
-| `bin/release minor` | Bump minor, update changelog, commit, tag |
-| `bin/release major` | Bump major, update changelog, commit, tag |
+| `bin/release patch` | Bump patch, update changelog, commit, tag, push |
+| `bin/release minor` | Bump minor, update changelog, commit, tag, push |
+| `bin/release major` | Bump major, update changelog, commit, tag, push |
 | `bundle exec rake preflight` | Specs + changelog check + clean tree |
-| `bundle exec rake build` | Build `.gem` into `pkg/` |
-| `gem push pkg/a2a-rb-x.y.z.gem` | Publish to RubyGems |
 | `bundle exec rake spec` | Run tests only |
